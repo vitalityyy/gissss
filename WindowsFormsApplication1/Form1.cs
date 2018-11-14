@@ -559,13 +559,16 @@ namespace WindowsFormsApplication1
 
         private void RemoveLayerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
-            ////代码出错
-            ICommand command = new RemoveLayer();
-            command.OnCreate(layer);
-            command.OnClick();
+            axMapControl1.Map.DeleteLayer(layer);
+            
         }//移除图层
 
+        private void ZoomToLaryerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (layer == null) return;
+            (axMapControl1.Map as IActiveView).Extent = layer.AreaOfInterest;
+            (axMapControl1.Map as IActiveView).PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+        }
     }
 }
 

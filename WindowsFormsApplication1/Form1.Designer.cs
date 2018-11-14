@@ -67,6 +67,7 @@
             this.contextMenuStrip1_Layer = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.OpenAttributeTableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RemoveLayerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ZoomToLaryerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.axToolbarControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.axTOCControl1)).BeginInit();
@@ -374,9 +375,10 @@
             this.contextMenuStrip1_Layer.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.contextMenuStrip1_Layer.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.OpenAttributeTableToolStripMenuItem,
-            this.RemoveLayerToolStripMenuItem});
+            this.RemoveLayerToolStripMenuItem,
+            this.ZoomToLaryerToolStripMenuItem});
             this.contextMenuStrip1_Layer.Name = "contextMenuStrip1_Layer";
-            this.contextMenuStrip1_Layer.Size = new System.Drawing.Size(184, 52);
+            this.contextMenuStrip1_Layer.Size = new System.Drawing.Size(184, 103);
             // 
             // OpenAttributeTableToolStripMenuItem
             // 
@@ -391,6 +393,13 @@
             this.RemoveLayerToolStripMenuItem.Size = new System.Drawing.Size(183, 24);
             this.RemoveLayerToolStripMenuItem.Text = "移除当前图层";
             this.RemoveLayerToolStripMenuItem.Click += new System.EventHandler(this.RemoveLayerToolStripMenuItem_Click);
+            // 
+            // ZoomToLaryerToolStripMenuItem
+            // 
+            this.ZoomToLaryerToolStripMenuItem.Name = "ZoomToLaryerToolStripMenuItem";
+            this.ZoomToLaryerToolStripMenuItem.Size = new System.Drawing.Size(183, 24);
+            this.ZoomToLaryerToolStripMenuItem.Text = "缩放到当前图层";
+            this.ZoomToLaryerToolStripMenuItem.Click += new System.EventHandler(this.ZoomToLaryerToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -467,6 +476,7 @@
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1_Layer;
         private System.Windows.Forms.ToolStripMenuItem OpenAttributeTableToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem RemoveLayerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem ZoomToLaryerToolStripMenuItem;
     }
 }
 
