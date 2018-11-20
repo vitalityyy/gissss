@@ -46,8 +46,16 @@
             this.ClassZoomOutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MapFullToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.Eagle_eyeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.点ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.线ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.编辑ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.DrawPolygonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.专题图制作ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.切换到布局视图ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.指北针ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.LEGENDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.NAMEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.比例尺ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.axToolbarControl1 = new ESRI.ArcGIS.Controls.AxToolbarControl();
             this.axTOCControl1 = new ESRI.ArcGIS.Controls.AxTOCControl();
             this.axMapControl1 = new ESRI.ArcGIS.Controls.AxMapControl();
@@ -88,7 +96,8 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.文件ToolStripMenuItem,
             this.操作ToolStripMenuItem,
-            this.编辑ToolStripMenuItem});
+            this.编辑ToolStripMenuItem,
+            this.专题图制作ToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(879, 28);
@@ -145,7 +154,9 @@
             this.ClassZoomInToolStripMenuItem,
             this.ClassZoomOutToolStripMenuItem,
             this.MapFullToolStripMenuItem,
-            this.Eagle_eyeToolStripMenuItem});
+            this.Eagle_eyeToolStripMenuItem,
+            this.点ToolStripMenuItem,
+            this.线ToolStripMenuItem});
             this.操作ToolStripMenuItem.Name = "操作ToolStripMenuItem";
             this.操作ToolStripMenuItem.Size = new System.Drawing.Size(51, 24);
             this.操作ToolStripMenuItem.Text = "操作";
@@ -214,6 +225,20 @@
             this.Eagle_eyeToolStripMenuItem.Text = "鹰眼视图";
             this.Eagle_eyeToolStripMenuItem.Click += new System.EventHandler(this.Eagle_eyeToolStripMenuItem_Click);
             // 
+            // 点ToolStripMenuItem
+            // 
+            this.点ToolStripMenuItem.Name = "点ToolStripMenuItem";
+            this.点ToolStripMenuItem.Size = new System.Drawing.Size(159, 26);
+            this.点ToolStripMenuItem.Text = "点";
+            this.点ToolStripMenuItem.Click += new System.EventHandler(this.点ToolStripMenuItem_Click);
+            // 
+            // 线ToolStripMenuItem
+            // 
+            this.线ToolStripMenuItem.Name = "线ToolStripMenuItem";
+            this.线ToolStripMenuItem.Size = new System.Drawing.Size(159, 26);
+            this.线ToolStripMenuItem.Text = "线";
+            this.线ToolStripMenuItem.Click += new System.EventHandler(this.线ToolStripMenuItem_Click);
+            // 
             // 编辑ToolStripMenuItem
             // 
             this.编辑ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -228,6 +253,53 @@
             this.DrawPolygonToolStripMenuItem.Size = new System.Drawing.Size(159, 26);
             this.DrawPolygonToolStripMenuItem.Text = "绘制多边形";
             this.DrawPolygonToolStripMenuItem.Click += new System.EventHandler(this.DrawPolygonToolStripMenuItem_Click);
+            // 
+            // 专题图制作ToolStripMenuItem
+            // 
+            this.专题图制作ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.切换到布局视图ToolStripMenuItem,
+            this.指北针ToolStripMenuItem,
+            this.LEGENDToolStripMenuItem,
+            this.NAMEToolStripMenuItem,
+            this.比例尺ToolStripMenuItem});
+            this.专题图制作ToolStripMenuItem.Name = "专题图制作ToolStripMenuItem";
+            this.专题图制作ToolStripMenuItem.Size = new System.Drawing.Size(96, 24);
+            this.专题图制作ToolStripMenuItem.Text = "专题图制作";
+            // 
+            // 切换到布局视图ToolStripMenuItem
+            // 
+            this.切换到布局视图ToolStripMenuItem.Name = "切换到布局视图ToolStripMenuItem";
+            this.切换到布局视图ToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.切换到布局视图ToolStripMenuItem.Text = "切换到布局视图";
+            this.切换到布局视图ToolStripMenuItem.Click += new System.EventHandler(this.切换到布局视图ToolStripMenuItem_Click);
+            // 
+            // 指北针ToolStripMenuItem
+            // 
+            this.指北针ToolStripMenuItem.Name = "指北针ToolStripMenuItem";
+            this.指北针ToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.指北针ToolStripMenuItem.Text = "指北针";
+            this.指北针ToolStripMenuItem.Click += new System.EventHandler(this.指北针ToolStripMenuItem_Click);
+            // 
+            // LEGENDToolStripMenuItem
+            // 
+            this.LEGENDToolStripMenuItem.Name = "LEGENDToolStripMenuItem";
+            this.LEGENDToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.LEGENDToolStripMenuItem.Text = "图例";
+            this.LEGENDToolStripMenuItem.Click += new System.EventHandler(this.LEGENDToolStripMenuItem_Click);
+            // 
+            // NAMEToolStripMenuItem
+            // 
+            this.NAMEToolStripMenuItem.Name = "NAMEToolStripMenuItem";
+            this.NAMEToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.NAMEToolStripMenuItem.Text = "图名";
+            this.NAMEToolStripMenuItem.Click += new System.EventHandler(this.NAMEToolStripMenuItem_Click);
+            // 
+            // 比例尺ToolStripMenuItem
+            // 
+            this.比例尺ToolStripMenuItem.Name = "比例尺ToolStripMenuItem";
+            this.比例尺ToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            this.比例尺ToolStripMenuItem.Text = "比例尺";
+            this.比例尺ToolStripMenuItem.Click += new System.EventHandler(this.比例尺ToolStripMenuItem_Click);
             // 
             // axToolbarControl1
             // 
@@ -369,6 +441,7 @@
             this.axPageLayoutControl1.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axPageLayoutControl1.OcxState")));
             this.axPageLayoutControl1.Size = new System.Drawing.Size(693, 372);
             this.axPageLayoutControl1.TabIndex = 0;
+            this.axPageLayoutControl1.OnMouseDown += new ESRI.ArcGIS.Controls.IPageLayoutControlEvents_Ax_OnMouseDownEventHandler(this.axPageLayoutControl1_OnMouseDown);
             // 
             // contextMenuStrip1_Layer
             // 
@@ -378,7 +451,7 @@
             this.RemoveLayerToolStripMenuItem,
             this.ZoomToLaryerToolStripMenuItem});
             this.contextMenuStrip1_Layer.Name = "contextMenuStrip1_Layer";
-            this.contextMenuStrip1_Layer.Size = new System.Drawing.Size(184, 103);
+            this.contextMenuStrip1_Layer.Size = new System.Drawing.Size(184, 76);
             // 
             // OpenAttributeTableToolStripMenuItem
             // 
@@ -477,6 +550,14 @@
         private System.Windows.Forms.ToolStripMenuItem OpenAttributeTableToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem RemoveLayerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ZoomToLaryerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 点ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 线ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 专题图制作ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 切换到布局视图ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 指北针ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem LEGENDToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem NAMEToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem 比例尺ToolStripMenuItem;
     }
 }
 

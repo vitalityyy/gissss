@@ -2,6 +2,7 @@
 using ESRI.ArcGIS.Controls;
 using ESRI.ArcGIS.Display;
 using ESRI.ArcGIS.esriSystem;
+using ESRI.ArcGIS.Geodatabase;
 using ESRI.ArcGIS.Geometry;
 using ESRI.ArcGIS.SystemUI;
 using System;
@@ -9,6 +10,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,6 +22,12 @@ namespace WindowsFormsApplication1
     {
         private IMapControlDefault pmapC;
         private string currentT;
+        private string page_currenttool;
+
+       
+
+        IRubberBand pRubberBand;
+        IGraphicsContainer pGraphicsContainer;
 
         public static bool overview = false;
         Eagle_eye frm_overview = null;
@@ -42,7 +50,7 @@ namespace WindowsFormsApplication1
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.Text = "hehehe&arcgis";
+            this.Text = "HeJiaqing&arcgis";
             pmapC = axMapControl1.Object as IMapControlDefault;                 //接口转接
             m_TocMapMenu.AddItem(new ControlsAddDataCommandClass(), 0, -1, false, esriCommandStyles.esriCommandStyleIconAndText);
             m_TocMapMenu.SetHook(axMapControl1);
@@ -210,6 +218,46 @@ namespace WindowsFormsApplication1
                 axMapControl1.Map.SelectByShape(pGeom, null, false);
                 //刷新地图
                 axMapControl1.Refresh(esriViewDrawPhase.esriViewGeography, null, null);
+            }
+            else if (currentT == "Points")
+            {
+                IMarkerElement pMarkerElement;//对于点，线，面的element定义这里都不一样，他是可实例化的类，而IElement是实例化的类，必须通过IMarkerElement 初始化负值给 IElement 。
+                IElement pMElement;
+                IPoint pPoint;//你画的图形式什么就是什么，特别的是LINE则需要定义为POLYLINE
+                pMarkerElement = new MarkerElementClass();
+                pMElement = pMarkerElement as IElement;
+
+
+                pRubberBand = new RubberPointClass();//你的RUBBERBAND随着你的图形耳边
+                pPoint = pRubberBand.TrackNew(axMapControl1.ActiveView.ScreenDisplay, null) as IPoint;
+
+                pMElement.Geometry = pPoint;//把你在屏幕中画好的图形付给 IElement 储存
+                pGraphicsContainer = axMapControl1.ActiveView as IGraphicsContainer;//把地图的当前view作为图片的容器
+
+                pGraphicsContainer.AddElement(pMElement, 0);//显示储存在 IElement 中图形，这样就持久化了。
+                axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+            }
+            else if (currentT == "polyline")
+            {
+                ILineElement pLineElement;
+                IElement pLElement;
+
+                IPolyline pLine;
+
+                pLineElement = new LineElementClass();
+                pLElement = pLineElement as IElement;
+
+                pRubberBand = new RubberLineClass();
+                pLine = pRubberBand.TrackNew(axMapControl1.ActiveView.ScreenDisplay, null) as IPolyline;
+
+                pLElement.Geometry = pLine;
+
+                pGraphicsContainer = axMapControl1.ActiveView as IGraphicsContainer;//把地图的当前view作为容器
+
+
+                pGraphicsContainer.AddElement(pLElement, 0);//把刚刚的element转到容器上
+                axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+
             }
 
         }            //鼠标在地图上发生事件
@@ -568,6 +616,305 @@ namespace WindowsFormsApplication1
             if (layer == null) return;
             (axMapControl1.Map as IActiveView).Extent = layer.AreaOfInterest;
             (axMapControl1.Map as IActiveView).PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+        }
+
+        private void 点ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axMapControl1.CurrentTool = null;
+            currentT = "Points";
+            axMapControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+        private void 线ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axMapControl1.CurrentTool = null;
+            currentT = "polyline";
+            axMapControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+        private void axPageLayoutControl1_OnMouseDown(object sender, IPageLayoutControlEvents_OnMouseDownEvent e)
+        {
+            IActiveView pActiveViewzjf;
+            IRubberBand pRubberBand;
+            IEnvelope pEnve;
+            IGraphicsContainer pGraphicsC;
+
+            switch (page_currenttool)
+            {
+                case "NorthArrow":
+                    pActiveViewzjf = (IActiveView)axPageLayoutControl1.PageLayout;
+                    pGraphicsC = axPageLayoutControl1.GraphicsContainer;
+                    pRubberBand = new RubberEnvelopeClass();
+                    pEnve = (IEnvelope)pRubberBand.TrackNew(pActiveViewzjf.ScreenDisplay, null);
+                    CreateNorthArrow(pEnve, pActiveViewzjf);
+                    (axPageLayoutControl1.GraphicsContainer as IGraphicsContainerSelect).UnselectAllElements();
+                    pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                    page_currenttool = null;
+                    axPageLayoutControl1.CurrentTool = null;
+
+                    break;
+                case "Legend":
+                    pActiveViewzjf = (IActiveView)axPageLayoutControl1.PageLayout;
+                    pGraphicsC = axPageLayoutControl1.GraphicsContainer;
+                    pRubberBand = new RubberEnvelopeClass();
+                    pEnve = (IEnvelope)pRubberBand.TrackNew(pActiveViewzjf.ScreenDisplay, null);
+                    CreateLegend(pEnve, pActiveViewzjf);
+                    (axPageLayoutControl1.GraphicsContainer as IGraphicsContainerSelect).UnselectAllElements();
+                    pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                    page_currenttool = null;
+                    axPageLayoutControl1.CurrentTool = null;
+
+                    break;
+                case "Text":
+                    pActiveViewzjf = (IActiveView)axPageLayoutControl1.PageLayout;
+                    pGraphicsC = axPageLayoutControl1.GraphicsContainer;
+                    pRubberBand = new RubberEnvelopeClass();
+                    pEnve = (IEnvelope)pRubberBand.TrackNew(pActiveViewzjf.ScreenDisplay, null);
+                    CreateText(e.x, e.y, pEnve, pActiveViewzjf);
+                    (axPageLayoutControl1.GraphicsContainer as IGraphicsContainerSelect).UnselectAllElements();
+                    pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                    page_currenttool = null;
+                    axPageLayoutControl1.CurrentTool = null;
+
+                    break;
+                case "Scalebar":
+                    pActiveViewzjf = (IActiveView)axPageLayoutControl1.PageLayout;
+                    pGraphicsC = axPageLayoutControl1.GraphicsContainer;
+                    pRubberBand = new RubberEnvelopeClass();
+                    pEnve = (IEnvelope)pRubberBand.TrackNew(pActiveViewzjf.ScreenDisplay, null);
+                    CreateScalebar(pEnve, pActiveViewzjf);
+                    (axPageLayoutControl1.GraphicsContainer as IGraphicsContainerSelect).UnselectAllElements();
+                    pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                    page_currenttool = null;
+                    axPageLayoutControl1.CurrentTool = null;
+
+                    break;
+                case "Scale":
+                    pActiveViewzjf = (IActiveView)axPageLayoutControl1.PageLayout;
+                    pGraphicsC = axPageLayoutControl1.GraphicsContainer;
+                    pRubberBand = new RubberEnvelopeClass();
+                    pEnve = (IEnvelope)pRubberBand.TrackNew(pActiveViewzjf.ScreenDisplay, null);
+                    CreateScale(pEnve, pActiveViewzjf);
+                    (axPageLayoutControl1.GraphicsContainer as IGraphicsContainerSelect).UnselectAllElements();
+                    pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                    page_currenttool = null;
+                    axPageLayoutControl1.CurrentTool = null;
+
+                    break;
+
+
+            }
+        }
+        private void CreateNorthArrow(IEnvelope pEnve, IActiveView pActiveViewzjf)
+        {
+            IMapFrame pMapFrame;
+            IMapSurroundFrame pMapSurroundF;
+            IMapSurround pMapsurround;
+            IElement pElement;
+            IMarkerNorthArrow pMarkNorthA;
+            ICharacterMarkerSymbol pCharcterMarkerS;
+            UID puid;
+            puid = new UIDClass();
+            puid.Value = "{7A3F91DD-B9E3-11d1-8756-0000F8751720}";
+            pMapFrame = (IMapFrame)pActiveViewzjf.GraphicsContainer.FindFrame(pActiveViewzjf.FocusMap);
+            pMapSurroundF = pMapFrame.CreateSurroundFrame(puid, null);
+            pMapsurround = pMapSurroundF.MapSurround;
+            pMarkNorthA = (IMarkerNorthArrow)pMapsurround;
+            pCharcterMarkerS = (ICharacterMarkerSymbol)pMarkNorthA.MarkerSymbol;
+            pCharcterMarkerS.CharacterIndex = 173;
+            pElement = (IElement)pMapSurroundF;
+            pElement.Geometry = pEnve;
+            pActiveViewzjf.GraphicsContainer.AddElement(pElement, 0);
+
+
+        }
+        private void CreateLegend(IEnvelope pEnve, IActiveView pActiveViewzjf)
+        {
+            IMapFrame pMapFrame;
+            IMapSurroundFrame pMapSurroundF;
+            IMapSurround pMapsurround;
+            IElement pElement;
+            ILegend pLegend;
+            ILegendItem pLegendItem;
+            UID uid;
+            uid = new UIDClass();
+            uid.Value = "{7A3F91E4-B9E3-11d1-8756-0000F8751720}";
+            IFillSymbol pFillSymbol;
+            ILineSymbol pLineSymbol;
+            IRgbColor pColor;
+            ISymbolBackground pSymbolBG;
+            pMapFrame = (IMapFrame)pActiveViewzjf.GraphicsContainer.FindFrame(pActiveViewzjf.FocusMap);
+            pMapSurroundF = pMapFrame.CreateSurroundFrame(uid, null);
+            pSymbolBG = new SymbolBackgroundClass();
+            pFillSymbol = new SimpleFillSymbolClass();
+            pLineSymbol = new SimpleLineSymbolClass();
+            pColor = new RgbColorClass();
+            pColor.Red = 255;
+            pColor.Blue = 255;
+            pColor.Green = 255;
+            pLineSymbol.Color = pColor as IColor;
+            pFillSymbol.Color = pColor as IColor;
+            pFillSymbol.Outline = pLineSymbol;
+            pSymbolBG.FillSymbol = pFillSymbol;
+            pMapSurroundF.Background = pSymbolBG;
+            pMapsurround = pMapSurroundF.MapSurround;
+            pLegend = (ILegend)pMapsurround;
+            pLegend.AutoAdd = true;
+            pLegend.AutoReorder = true;
+            pLegend.AutoVisibility = true;
+            pLegend.Title = "图 例";
+            pLegend.ClearItems();
+            IEnumLayer pEnumerlayer;
+            ILayer ply;
+            pEnumerlayer = pLegend.Map.get_Layers(null, false);
+            pEnumerlayer.Reset();
+            ply = pEnumerlayer.Next();
+            while (ply != null)
+            {
+                if (ply is IFeatureLayer)
+                {
+                    if ((ply as IFeatureLayer).FeatureClass.FeatureType == esriFeatureType.esriFTAnnotation)
+                    {
+                        ply = pEnumerlayer.Next();
+                        continue;
+
+                    }
+                }
+                pLegendItem = new HorizontalLegendItemClass();
+                pLegendItem.Layer = ply;
+                pLegendItem.Columns = 1;
+                pLegendItem.ShowLayerName = true;
+                pLegendItem.ShowHeading = true;
+                pLegendItem.ShowLabels = true;
+                pLegend.AddItem(pLegendItem);
+                ply = (pEnumerlayer.Next());
+
+            }
+            pElement = (IElement)pMapSurroundF;
+            pElement.Geometry = pEnve;
+            pActiveViewzjf.GraphicsContainer.AddElement(pElement, 0);
+            pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, pEnve);
+
+
+        }
+        private void CreateText(double x, double y, IEnvelope pEnve, IActiveView pActiveViewzjf)
+        {
+            ITextElement pTextelement;
+            IElement pElement;
+            IGraphicsContainer pGraphicsC = axPageLayoutControl1.GraphicsContainer;
+            pTextelement = new TextElementClass();
+            pElement = (IElement)pTextelement;
+            pTextelement.ScaleText = false;
+            pTextelement.Symbol.Size = 50;
+            pTextelement.Text = "这是一个文本元素";
+            pElement.Geometry = pActiveViewzjf.ScreenDisplay.DisplayTransformation.ToMapPoint(Convert.ToInt32(x), Convert.ToInt32(y));
+            pGraphicsC.AddElement(pElement, 0);
+            pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+
+        }
+        private void CreateScalebar(IEnvelope pEnve, IActiveView pActiveViewzjf)
+        {
+            IMapFrame pMapFrame;
+            IMapSurroundFrame pMapSurroundF;
+            IMapSurround pMapsurround;
+            IElement pElement;
+            IScaleBar pScaleBar;
+            UID puid;
+            puid = new UIDClass();
+            puid.Value = "{6589F147-F7F7-11d2-B872-00600802E603}";
+            pMapFrame = (IMapFrame)pActiveViewzjf.GraphicsContainer.FindFrame(pActiveViewzjf.FocusMap);
+            pMapSurroundF = pMapFrame.CreateSurroundFrame(puid, null);
+            IFillSymbol pFillSymbol;
+            ILineSymbol pLineSymbol;
+            IRgbColor pColor;
+            ISymbolBackground pSymbolBG;
+            pSymbolBG = new SymbolBackgroundClass();
+            pFillSymbol = new SimpleFillSymbolClass();
+            pLineSymbol = new SimpleLineSymbolClass();
+            pColor = new RgbColorClass();
+            pColor.Red = 255;
+            pColor.Blue = 255;
+            pColor.Green = 255;
+            pLineSymbol.Color = pColor as IColor;
+            pFillSymbol.Color = pColor as IColor;
+            pFillSymbol.Outline = pLineSymbol;
+            pSymbolBG.FillSymbol = pFillSymbol;
+            pMapSurroundF.Background = pSymbolBG;
+            pMapsurround = pMapSurroundF.MapSurround;
+            pScaleBar = pMapsurround as IScaleBar;
+            pScaleBar.DivisionsBeforeZero = 1;
+            pScaleBar.Divisions = 3;
+            pScaleBar.Subdivisions = 10;
+            pScaleBar.Units = esriUnits.esriKilometers;
+            pScaleBar.UnitLabel = "千米";
+            //pScaleBar.LabelSymbol.Size = 2;
+
+            //为什么不能更改大小
+            pScaleBar.UnitLabelPosition = esriScaleBarPos.esriScaleBarAbove;
+            pScaleBar.LabelPosition = esriVertPosEnum.esriBelow;
+            pScaleBar.LabelFrequency = esriScaleBarFrequency.esriScaleBarDivisionsAndFirstMidpoint;
+            pElement = (IElement)pMapSurroundF;
+            pElement.Geometry = pEnve;
+            pActiveViewzjf.GraphicsContainer.AddElement(pElement, 0);
+            pActiveViewzjf.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, pEnve);
+        }
+        private void CreateScale(IEnvelope pEnve, IActiveView pActiveViewzjf)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void 指北针ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string str_tab = tabControl1.SelectedTab.Text;
+            if (tabControl1.TabIndex != 7)
+            {
+                MessageBox.Show("该功能仅能在出图视图中可用！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            }
+            axPageLayoutControl1.CurrentTool = null;
+            page_currenttool = "NorthArrow";
+            axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+        private void 切换到布局视图ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.TabIndex == 6)
+            {
+                tabControl1.TabIndex = 7;
+            }
+            else
+            {
+                tabControl1.TabIndex = 7;
+            }
+        }
+
+        private void LEGENDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axPageLayoutControl1.CurrentTool = null;
+            page_currenttool = "Legend";
+            axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }//添加图例
+
+        private void NAMEToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            axPageLayoutControl1.CurrentTool = null;
+            page_currenttool = "Text";
+            axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+        private void 比例尺ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axPageLayoutControl1.CurrentTool = null;
+            page_currenttool = "Scalebar";
+            axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+        private void 数字比例尺ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axPageLayoutControl1.CurrentTool = null;
+            page_currenttool = "Scale";
+            axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
         }
     }
 }
