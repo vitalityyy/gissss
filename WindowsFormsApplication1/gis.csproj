@@ -49,11 +49,24 @@
     <Reference Include="ESRI.ArcGIS.Controls">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
+    <Reference Include="ESRI.ArcGIS.DataSourcesGDB, Version=10.4.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath>..\..\..\ArcGIS 10.4\DeveloperKit10.4\DotNet\ESRI.ArcGIS.DataSourcesGDB.dll</HintPath>
+    </Reference>
+    <Reference Include="ESRI.ArcGIS.DataSourcesRaster, Version=10.4.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86">
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
     <Reference Include="ESRI.ArcGIS.Display">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
+    <Reference Include="ESRI.ArcGIS.GeoAnalyst, Version=10.4.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath>..\..\..\ArcGIS 10.4\DeveloperKit10.4\DotNet\ESRI.ArcGIS.GeoAnalyst.dll</HintPath>
+    </Reference>
     <Reference Include="ESRI.ArcGIS.Geodatabase, Version=10.4.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="ESRI.ArcGIS.Geometry">
       <EmbedInteropTypes>False</EmbedInteropTypes>
@@ -64,6 +77,11 @@
     <Reference Include="ESRI.ArcGIS.Output">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
+    <Reference Include="ESRI.ArcGIS.SpatialAnalyst, Version=10.4.0.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath>..\..\..\ArcGIS 10.4\DeveloperKit10.4\DotNet\ESRI.ArcGIS.SpatialAnalyst.dll</HintPath>
+    </Reference>
     <Reference Include="ESRI.ArcGIS.System">
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
@@ -72,7 +90,7 @@
     </Reference>
     <Reference Include="ESRI.ArcGIS.Version" />
     <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -94,6 +112,12 @@
     <Compile Include="AttributeTableFrm.Designer.cs">
       <DependentUpon>AttributeTableFrm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ContourFrm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ContourFrm.Designer.cs">
+      <DependentUpon>ContourFrm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Eagle_eye.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -109,10 +133,17 @@
     <Compile Include="OpenAttributeTable.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RemoveLayer.cs" />
-    <Compile Include="ZoomToLayer.cs" />
+    <Compile Include="WelcomeFrm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="WelcomeFrm.Designer.cs">
+      <DependentUpon>WelcomeFrm.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="AttributeTableFrm.resx">
       <DependentUpon>AttributeTableFrm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ContourFrm.resx">
+      <DependentUpon>ContourFrm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Eagle_eye.resx">
       <DependentUpon>Eagle_eye.cs</DependentUpon>
@@ -129,6 +160,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="WelcomeFrm.resx">
+      <DependentUpon>WelcomeFrm.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -144,12 +178,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="OpenAttributeTable.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="RemoveLayer.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="ZoomToLayer.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

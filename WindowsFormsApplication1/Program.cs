@@ -19,7 +19,8 @@ namespace WindowsFormsApplication1
             ESRI.ArcGIS.RuntimeManager.Bind(ESRI.ArcGIS.ProductCode.EngineOrDesktop);//许可
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+             Application.Run(new Form1());
+          //  WelcomeFrm.LoadAndRun(new Form1());
         }
     }
 }

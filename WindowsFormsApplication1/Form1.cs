@@ -1,9 +1,13 @@
-﻿using ESRI.ArcGIS.Carto;
+﻿using ESRI.ArcGIS.Analyst3D;
+using ESRI.ArcGIS.Carto;
 using ESRI.ArcGIS.Controls;
+using ESRI.ArcGIS.DataSourcesGDB;
 using ESRI.ArcGIS.Display;
 using ESRI.ArcGIS.esriSystem;
+using ESRI.ArcGIS.GeoAnalyst;
 using ESRI.ArcGIS.Geodatabase;
 using ESRI.ArcGIS.Geometry;
+using ESRI.ArcGIS.SpatialAnalyst;
 using ESRI.ArcGIS.SystemUI;
 using System;
 using System.Collections.Generic;
@@ -24,7 +28,7 @@ namespace WindowsFormsApplication1
         private string currentT;
         private string page_currenttool;
 
-       
+
 
         IRubberBand pRubberBand;
         IGraphicsContainer pGraphicsContainer;
@@ -32,8 +36,8 @@ namespace WindowsFormsApplication1
         public static bool overview = false;
         Eagle_eye frm_overview = null;
 
-        IToolbarMenu m_TocLayerMenu = new ToolbarMenuClass();
-        IToolbarMenu m_TocMapMenu = new ToolbarMenuClass();
+        IToolbarMenu m_TocLayerMenu = new ToolbarMenuClass();//图层右键
+        IToolbarMenu m_TocMapMenu = new ToolbarMenuClass();//地图右键
 
         esriTOCControlItem itemType = esriTOCControlItem.esriTOCControlItemNone;
         IBasicMap basicMap = null;
@@ -50,6 +54,26 @@ namespace WindowsFormsApplication1
 
         private void Form1_Load(object sender, EventArgs e)
         {
+
+            //new System.Threading.Thread(new System.Threading.ThreadStart(delegate
+            //{
+            //    WelcomeFrm welcomefrm = new WelcomeFrm();
+            //    FrmLoading frmLoading = new FrmLoading();
+            //    this.Shown += delegate
+            //    {
+            //        welcomefrm.Invoke(new EventHandler(welcomefrm.KillMe));
+            //        welcomefrm.Dispose();
+            //    };
+            //    frmLoading.Show();
+            //    Application.Run(welcomefrm);
+            //})).Start();
+            //构造窗体函数，比较耗时
+            //BuildForm();
+            //base.OnLoad(e);
+            //主线程休息会儿
+            //System.Threading.Thread.Sleep(5000);
+            // base.OnLoad(e);
+
             this.Text = "HeJiaqing&arcgis";
             pmapC = axMapControl1.Object as IMapControlDefault;                 //接口转接
             m_TocMapMenu.AddItem(new ControlsAddDataCommandClass(), 0, -1, false, esriCommandStyles.esriCommandStyleIconAndText);
@@ -228,7 +252,7 @@ namespace WindowsFormsApplication1
                 pMElement = pMarkerElement as IElement;
 
 
-                pRubberBand = new RubberPointClass();//你的RUBBERBAND随着你的图形耳边
+                pRubberBand = new RubberPointClass();//你的RUBBERBAND随着你的图形而变
                 pPoint = pRubberBand.TrackNew(axMapControl1.ActiveView.ScreenDisplay, null) as IPoint;
 
                 pMElement.Geometry = pPoint;//把你在屏幕中画好的图形付给 IElement 储存
@@ -255,12 +279,39 @@ namespace WindowsFormsApplication1
                 pGraphicsContainer = axMapControl1.ActiveView as IGraphicsContainer;//把地图的当前view作为容器
 
 
-                pGraphicsContainer.AddElement(pLElement, 0);//把刚刚的element转到容器上
+                pGraphicsContainer.AddElement(pLElement, 0);//把刚刚的element转到容器上 
                 axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
 
             }
+            else if (currentT == "SpatialFilter")
+            {
+                IPoint point = new PointClass();
+                point.PutCoords(e.mapX, e.mapY);
+                IFeatureLayer pfl = layer as IFeatureLayer;
+                IFeature pf = Map_Functions.SeartchFeature(axMapControl1.Map, point, pfl);
+                axMapControl1.Refresh(esriViewDrawPhase.esriViewGeoSelection, null, null);
+                MessageBox.Show(pf.OID.ToString());
+            }
+            else if (currentT == "Identify")
+            {
+                IMap pamp = axMapControl1.Map;
+                IIdentify pIdentify = pamp.get_Layer(5) as IIdentify;
+                IPoint pPoint = new PointClass();
+                pPoint.PutCoords(e.mapX, e.mapY);
+                pPoint.SpatialReference = pamp.SpatialReference;
+                IArray pArray = pIdentify.Identify(pPoint);
+                if (pArray != null)
+                {
+                    IFeatureIdentifyObj pFIO = pArray.get_Element(0) as IFeatureIdentifyObj;
+                    IRowIdentifyObject pRIO = pFIO as IRowIdentifyObject;
+                    IRow prow = pRIO.Row;
+                    axMapControl1.FlashShape((prow as IFeature).Shape, 3, 300, Type.Missing);
+                    MessageBox.Show(prow.get_Value(prow.Fields.FindField("code_1")).ToString());
 
-        }            //鼠标在地图上发生事件
+                }
+
+            }
+        }//鼠标在地图上发生事件
         private void DrawMapShape(IGeometry pGeom)
         {
             IRgbColor pColor = new RgbColorClass();
@@ -487,9 +538,9 @@ namespace WindowsFormsApplication1
 
         private void axMapControl1_OnMouseMove(object sender, IMapControlEvents2_OnMouseMoveEvent e)   //鼠标位置
         {
-            ScaleLabel.Text = "比例尺1：" + ((long)this.axMapControl1.MapScale).ToString();
+            ScaleLabel.Text = "比例尺1：" + axMapControl1.MapScale.ToString();
             // CoordinateLabel .Text="当前坐标 X="+e.mapY.ToString() + " Y = " + e.mapY.ToString() + " " + sMapUnits;
-            CoordinateLabel.Text = "当前坐标 X=" + e.mapY.ToString() + " Y = " + e.mapY.ToString();
+            CoordinateLabel.Text = "当前坐标 X=" + e.mapX.ToString() + " Y = " + e.mapY.ToString();
         }
 
         private void axMapControl1_OnMapReplaced(object sender, IMapControlEvents2_OnMapReplacedEvent e)
@@ -608,7 +659,7 @@ namespace WindowsFormsApplication1
         private void RemoveLayerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             axMapControl1.Map.DeleteLayer(layer);
-            
+
         }//移除图层
 
         private void ZoomToLaryerToolStripMenuItem_Click(object sender, EventArgs e)
@@ -915,6 +966,629 @@ namespace WindowsFormsApplication1
             axPageLayoutControl1.CurrentTool = null;
             page_currenttool = "Scale";
             axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+
+
+        private void TaggingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (TaggingToolStripMenuItem.Text == "取消标注")
+            {
+                (layer as IGeoFeatureLayer).DisplayAnnotation = false;
+
+                axMapControl1.Refresh();
+
+                return;
+            }
+            //Frm_label frm = new Frm_label(TocRightLayer as IGeoFeatureLayer);
+            //添加一个frm label 用来控制标注
+
+            //if (frm.ShowDialog() == DialogResult.OK)
+            //{
+            //    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+            //}
+        }
+
+
+
+        private void SlopeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ILayer pl = axMapControl1.get_Layer(0);
+            if (pl is IRasterLayer)
+            {
+                IRasterLayer pRasterLayer = pl as IRasterLayer;
+                IRaster pIRaster = pRasterLayer.Raster;
+                ISurfaceOp pSufaceOp = new RasterSurfaceOpClass();
+                object zFactor = 1;
+                IGeoDataset pGeoDataset = pSufaceOp.Aspect((IGeoDataset)pIRaster);
+                IRasterLayer pRasterLayer_new = new RasterLayerClass();
+                //IRasterLayer pRasterLayer_new = pl as IRasterLayer;
+                IRaster praster;
+                praster = (IRaster)pGeoDataset;
+                pRasterLayer_new.CreateFromRaster(praster);
+                pRasterLayer_new.Name = "Aspect";
+                axMapControl1.AddLayer(pRasterLayer_new);
+                axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+            }
+        }//生成坡度
+
+        private void HillShadeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ILayer pl = axMapControl1.get_Layer(0);
+            if (pl is IRasterLayer)
+            {
+                IRasterLayer pRasterLayer = pl as IRasterLayer;
+                IRaster pIRaster = pRasterLayer.Raster;
+                ISurfaceOp pSufaceOp = new RasterSurfaceOpClass();
+                object zFactor = 2;
+                IGeoDataset pGeoDataset = pSufaceOp.HillShade((IGeoDataset)pIRaster, 135, 45, true, ref zFactor);
+                //IRasterLayer pRasterLayer_new = pl as IRasterLayer;
+                IRasterLayer pRasterLayer_new = new RasterLayerClass();
+                //IRaster praster = new RasterClass();
+                IRaster praster;
+                praster = (IRaster)pGeoDataset;
+                pRasterLayer_new.CreateFromRaster(praster);
+                pRasterLayer_new.Name = "HillShade";
+                axMapControl1.AddLayer(pRasterLayer_new);
+                axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+
+
+            }
+
+        }//山体阴影
+
+        private void AspectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ILayer pl = axMapControl1.get_Layer(0);
+            if (pl is IRasterLayer)
+            {
+                IRasterLayer pRasterLayer = pl as IRasterLayer;
+                IRaster pIRaster = pRasterLayer.Raster;
+                ISurfaceOp pSufaceOp = new RasterSurfaceOpClass();
+                object zFactor = 1;
+                IGeoDataset pGeoDataset = pSufaceOp.Aspect((IGeoDataset)pIRaster);
+                IRasterLayer pRasterLayer_new = new RasterLayerClass();
+                //IRasterLayer pRasterLayer_new = pl as IRasterLayer;
+                IRaster praster;
+                praster = (IRaster)pGeoDataset;
+                pRasterLayer_new.CreateFromRaster(praster);
+                pRasterLayer_new.Name = "Aspect";
+                axMapControl1.AddLayer(pRasterLayer_new);
+                axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+
+            }
+        }//生成坡向
+
+        private void 栅格技算ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            IRasterLayer pRl1 = axMapControl1.get_Layer(0) as IRasterLayer;
+            IRasterLayer pRl2 = axMapControl1.get_Layer(1) as IRasterLayer;
+            IMapAlgebraOp pMAO = new RasterMapAlgebraOpClass();
+            pMAO.BindRaster(pRl1 as IGeoDataset, "raster1");
+            pMAO.BindRaster(pRl2 as IGeoDataset, "raster2");
+            IGeoDataset poutGeods = pMAO.Execute("[raster1] * 0.6 + [raster2] * 0.4");
+            IRasterLayer prs = new RasterLayerClass();
+            prs.CreateFromRaster(poutGeods as IRaster);
+            axMapControl1.AddLayer(prs);
+        }
+
+        private void ContourToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ContourFrm frm = new ContourFrm();
+            frm.Show();
+        }
+
+        private void 空间查询ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axMapControl1.CurrentTool = null;
+            currentT = "SpatialFilter";
+            axMapControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+        public class Map_Functions
+        {
+            public static IFeature SeartchFeature(IMap pMap, IPoint point, IFeatureLayer pFeatureLayer)
+            {
+                IFeature pFeature = null;
+
+                IFeatureClass pFeatureClass = pFeatureLayer.FeatureClass;
+                //IFeatureClass pFeatureClass = pFeature as  IFeatureClass;
+
+                ITopologicalOperator pTopo = point as ITopologicalOperator;
+                IGeometry pBuffer = pTopo.Buffer(200);
+                IGeometry pGeometry = pBuffer.Envelope;
+
+                ISpatialFilter pSpatialFillter = new SpatialFilterClass();
+                pSpatialFillter.Geometry = pGeometry;
+                switch (pFeatureClass.ShapeType)
+                {
+                    case esriGeometryType.esriGeometryPoint:
+                        pSpatialFillter.SpatialRel = esriSpatialRelEnum.esriSpatialRelContains;
+                        break;
+                    case esriGeometryType.esriGeometryPolyline:
+                        pSpatialFillter.SpatialRel = esriSpatialRelEnum.esriSpatialRelIntersects;
+                        break;
+                    case esriGeometryType.esriGeometryPolygon:
+                        pSpatialFillter.SpatialRel = esriSpatialRelEnum.esriSpatialRelIntersects;
+                        break;
+                }
+                IFeatureSelection pFSelection = pFeatureLayer as IFeatureSelection;
+                pFSelection.SelectFeatures(pSpatialFillter, esriSelectionResultEnum.esriSelectionResultNew, false);
+                ISelectionSet pselectionset = pFSelection.SelectionSet;
+                IEnumIDs pEids = pselectionset.IDs;
+                pEids.Reset();
+                int id = pEids.Next();
+                while (id != -1)
+                {
+                    pFeature = pFeatureClass.GetFeature(id);
+                    break;
+                }
+                return pFeature;
+            }
+
+            internal static IFeatureClass Featureclass_Intersect(IFeatureClass pfc_input, bool p, IFeatureClass pfc_overlap, bool p_2, string intersect_or_union)
+            {
+                IFeatureClass pfc_result = null;
+                try
+                {
+                    IWorkspaceFactory pwsf = new InMemoryWorkspaceFactoryClass();
+                    IWorkspaceName pWSName = pwsf.Create("", "Temp", null, 0);
+                    IFeatureClassName ResultFeatureClassName = new FeatureClassNameClass();
+                    IDatasetName ResultDatasetName = (IDatasetName)ResultFeatureClassName;
+                    ResultDatasetName.Name = "layer_interset";
+                    ResultDatasetName.WorkspaceName = pWSName;
+                    IBasicGeoprocessor bgp = new BasicGeoprocessorClass();
+                    double wc = 0.0;
+                    switch (intersect_or_union)
+                    {
+                        case "intersect":
+                            pfc_result = bgp.Intersect((ITable)pfc_input, true, (ITable)pfc_overlap, false, wc, ResultFeatureClassName);
+                            break;
+                        case "union":
+                            pfc_result = bgp.Union((ITable)pfc_input, true, (ITable)pfc_overlap, false, wc, ResultFeatureClassName);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                catch
+                {
+
+                }
+                return pfc_result;
+
+            }
+
+            public static IFeatureClass buffer(IFeatureClass pFeatureClass, IQueryFilter filter, IMap pMap, string fieldname)
+            {
+                IFeatureClass feacls = null;
+                try
+                {
+                    IWorkspaceFactory pWSF = new InMemoryWorkspaceFactoryClass();
+                    IWorkspaceName pWSName = pWSF.Create("", "Temp", null, 0);
+                    IFeatureClassName sourceFeatureClassName = new FeatureClassNameClass();
+                    IDatasetName sourceDataSetName = (IDatasetName)sourceFeatureClassName;
+                    sourceDataSetName.Name = "缓冲区";
+                    sourceDataSetName.WorkspaceName = pWSName;
+                    IFeatureCursorBuffer2 featurecusbuf = new FeatureCursorBufferClass();
+                    featurecusbuf.FeatureCursor = pFeatureClass.Search(filter, false);
+                    featurecusbuf.Dissolve = true;
+                    featurecusbuf.ValueDistance = 100;
+                    featurecusbuf.SpatialReference = pMap.SpatialReference;
+                    featurecusbuf.BufferSpatialReference = pMap.SpatialReference;
+                    featurecusbuf.SourceSpatialReference = pMap.SpatialReference;
+                    featurecusbuf.TargetSpatialReference = pMap.SpatialReference;
+                    featurecusbuf.DataFrameSpatialReference = pMap.SpatialReference;
+                    featurecusbuf.Buffer(sourceFeatureClassName);
+                    feacls = (sourceFeatureClassName as IName).Open() as IFeatureClass;
+                }
+                catch
+                {
+
+                }
+                return feacls;
+            }
+        }
+
+        private void 空间叠置ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            IFeatureClass pfc1 = (axMapControl1.get_Layer(4) as IFeatureLayer).FeatureClass;
+            IFeatureClass pfc2 = (axMapControl1.get_Layer(5) as IFeatureLayer).FeatureClass;
+            IFeatureLayer pfl = new FeatureLayerClass();
+            pfl.FeatureClass = Map_Functions.Featureclass_Intersect(pfc1, false, pfc2, false, "intersect");
+            pfl.Name = "空间叠置";
+            axMapControl1.AddLayer(pfl);
+            axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+        }
+
+        private void 建立缓冲区ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            IFeatureClass pfc = (axMapControl1.get_Layer(0) as IFeatureLayer).FeatureClass;
+            IFeatureLayer pfl = new FeatureLayerClass();
+            pfl.FeatureClass = Map_Functions.buffer(pfc, null, axMapControl1.Map, "");
+            pfl.Name = "缓冲区";
+            axMapControl1.AddLayer(pfl);
+            axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGeography, null, null);
+        }
+
+        private void 元素特征ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axMapControl1.CurrentTool = null;
+            if (MessageBox.Show
+                ("需要先合并两个面元素，再执行该操作（为了实验效果，最好要两个离散元素)。", "提示",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            {
+                return;
+            }
+            IGraphicsContainerSelect pGC = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect：由Map转换，用于管理所选元素
+            if (pGC.ElementSelectionCount != 0)
+            {
+                IEnumElement pEelement = pGC.SelectedElements;
+                //IEnumElement：一个元素枚举，提供reset（）和next（）方法
+                //IEnumFeature：用于要素枚举
+                pEelement.Reset();
+                IElement pelement = pEelement.Next();
+                while (pelement != null)
+                {
+                    IGeometry pG = pelement.Geometry;
+                    int pointcount = (pG as IPointCollection).PointCount;
+                    int GeometryCount = (pG as IGeometryCollection).GeometryCount;
+                    int segmentcount = (pG as ISegmentCollection).SegmentCount;
+                    MessageBox.Show("Ipointcollection:" + pointcount.ToString() +
+                        ";IGeometryCollection" + GeometryCount.ToString() +
+                        ";ISegementCollection:" + segmentcount.ToString(), "注意个数");
+                    pelement = pEelement.Next();
+                }
+            }
+        }
+
+        private void 交ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            if (MessageBox.Show
+                 ("需要两个元素，准备好了吗?", "提示",
+                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return;
+            IGraphicsContainerSelect pGCS = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect接口由MAP接口转换而来，用于管理所选元素
+            if (pGCS.ElementSelectionCount == 2)
+            {
+                IEnumElement pEnumE = pGCS.SelectedElements;
+                pEnumE.Reset();
+
+                IElement pE1 = pEnumE.Next();
+                IGeometry pG1 = pE1.Geometry;
+
+                ITopologicalOperator2 pTopo = pG1 as ITopologicalOperator2;
+                //ITopologicalOperator拓扑接口，交并补差，通常下一次操作两个元素
+                //注：一般不用ITopologicalOperator接口，改用2甚至更高，因为1容易报错
+                if (!pTopo.IsKnownSimple)
+                    pTopo.Simplify();
+
+
+
+                IElement pE2 = pEnumE.Next();
+                IGeometry pG2 = pE2.Geometry;
+
+                IGeometry pGeoOut = null;
+
+                if (pE2 != null)
+                {
+                    (pG2 as ITopologicalOperator2).Simplify();
+
+                    IRelationalOperator pRoper = pG1 as IRelationalOperator;
+                    if (pRoper.Overlaps(pG2))
+                        pGeoOut = pTopo.Intersect(pG2, esriGeometryDimension.esriGeometry2Dimension);
+                }
+                if (pGeoOut != null)
+                {
+                    IRgbColor rgbcolor = new RgbColorClass();
+                    rgbcolor.Blue = 255;
+                    ISimpleFillSymbol fillsymbol = new SimpleFillSymbolClass();
+                    fillsymbol.Color = rgbcolor;
+                    fillsymbol.Style = esriSimpleFillStyle.esriSFSForwardDiagonal;
+                    IElement pelement = new PolygonElementClass();
+                    pelement.Geometry = pGeoOut;
+                    IFillShapeElement pfillelement = pelement as IFillShapeElement;
+                    pfillelement.Symbol = fillsymbol as IFillSymbol;
+                    (axMapControl1.Map as IGraphicsContainer).AddElement(pelement, 0);
+                    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                }
+            }
+        }
+
+        private void 并ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show
+               ("需要两个元素，准备好了吗?", "提示",
+               MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return;
+            IGraphicsContainerSelect pGCS = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect接口由MAP接口转换而来，用于管理所选元素
+            if (pGCS.ElementSelectionCount == 2)
+            {
+                IEnumElement pEnumE = pGCS.SelectedElements;
+                pEnumE.Reset();
+
+                IElement pE1 = pEnumE.Next();
+                IGeometry pG1 = pE1.Geometry;
+
+                ITopologicalOperator2 pTopo = pG1 as ITopologicalOperator2;
+                //ITopologicalOperator拓扑接口，交并补差，通常下一次操作两个元素
+                //注：一般不用ITopologicalOperator接口，改用2甚至更高，因为1容易报错
+                if (!pTopo.IsKnownSimple)
+                    pTopo.Simplify();
+
+
+                IElement pE2 = pEnumE.Next();
+                IGeometry pG2 = pE2.Geometry;
+
+                IGeometry pGeoOut = null;
+
+                if (pE2 != null)
+                {
+                    (pG2 as ITopologicalOperator2).Simplify();
+
+                    //1.求并
+                    pGeoOut = pTopo.Union(pG2);
+
+
+                }
+                if (pGeoOut != null)
+                {
+                    IRgbColor rgbcolor = new RgbColorClass();
+                    rgbcolor.Blue = 255;
+                    ISimpleFillSymbol fillsymbol = new SimpleFillSymbolClass();
+                    fillsymbol.Color = rgbcolor;
+                    fillsymbol.Style = esriSimpleFillStyle.esriSFSForwardDiagonal;
+                    IElement pelement = new PolygonElementClass();
+                    pelement.Geometry = pGeoOut;
+                    IFillShapeElement pfillelement = pelement as IFillShapeElement;
+                    pfillelement.Symbol = fillsymbol as IFillSymbol;
+                    (axMapControl1.Map as IGraphicsContainer).AddElement(pelement, 0);
+                    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                }
+            }
+        }
+
+        private void 差ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show
+               ("需要两个元素，准备好了吗?", "提示",
+               MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return;
+            IGraphicsContainerSelect pGCS = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect接口由MAP接口转换而来，用于管理所选元素
+            if (pGCS.ElementSelectionCount == 2)
+            {
+                IEnumElement pEnumE = pGCS.SelectedElements;
+                pEnumE.Reset();
+
+                IElement pE1 = pEnumE.Next();
+                IGeometry pG1 = pE1.Geometry;
+
+                ITopologicalOperator2 pTopo = pG1 as ITopologicalOperator2;
+                //ITopologicalOperator拓扑接口，交并补差，通常下一次操作两个元素
+                //注：一般不用ITopologicalOperator接口，改用2甚至更高，因为1容易报错
+                if (!pTopo.IsKnownSimple)
+                    pTopo.Simplify();
+
+                //真jb煞笔，眼睛长这么大 瞎啊！！！
+
+                IElement pE2 = pEnumE.Next();
+                IGeometry pG2 = pE2.Geometry;
+
+                IGeometry pGeoOut = null;
+
+                if (pE2 != null)
+                {
+                    (pG2 as ITopologicalOperator2).Simplify();
+
+                    //3.求差
+                    IRelationalOperator pRoper = pG1 as IRelationalOperator;
+                    if (pRoper.Overlaps(pG2))
+                        pGeoOut = pTopo.Difference(pG2);
+                }
+                if (pGeoOut != null)
+                {
+                    IRgbColor rgbcolor = new RgbColorClass();
+                    rgbcolor.Blue = 255;
+                    ISimpleFillSymbol fillsymbol = new SimpleFillSymbolClass();
+                    fillsymbol.Color = rgbcolor;
+                    fillsymbol.Style = esriSimpleFillStyle.esriSFSForwardDiagonal;
+                    IElement pelement = new PolygonElementClass();
+                    pelement.Geometry = pGeoOut;
+                    IFillShapeElement pfillelement = pelement as IFillShapeElement;
+                    pfillelement.Symbol = fillsymbol as IFillSymbol;
+                    (axMapControl1.Map as IGraphicsContainer).AddElement(pelement, 0);
+                    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                }
+            }
+        }
+
+        private void 异或ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show
+                 ("需要两个元素，准备好了吗?", "提示",
+                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return;
+            IGraphicsContainerSelect pGCS = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect接口由MAP接口转换而来，用于管理所选元素
+            if (pGCS.ElementSelectionCount == 2)
+            {
+                IEnumElement pEnumE = pGCS.SelectedElements;
+                pEnumE.Reset();
+
+                IElement pE1 = pEnumE.Next();
+                IGeometry pG1 = pE1.Geometry;
+
+                ITopologicalOperator2 pTopo = pG1 as ITopologicalOperator2;
+                //ITopologicalOperator拓扑接口，交并补差，通常下一次操作两个元素
+                //注：一般不用ITopologicalOperator接口，改用2甚至更高，因为1容易报错
+                if (!pTopo.IsKnownSimple)
+                    pTopo.Simplify();
+
+                IElement pE2 = pEnumE.Next();
+                IGeometry pG2 = pE2.Geometry;
+
+                IGeometry pGeoOut = null;
+
+                if (pE2 != null)
+                {
+                    (pG2 as ITopologicalOperator2).Simplify();
+                    //4.求异或
+                    IRelationalOperator pRoper = pG1 as IRelationalOperator;
+                    if (pRoper.Overlaps(pG2))
+                        pGeoOut = pTopo.SymmetricDifference(pG2);
+
+
+                }
+                if (pGeoOut != null)
+                {
+                    IRgbColor rgbcolor = new RgbColorClass();
+                    rgbcolor.Blue = 255;
+                    ISimpleFillSymbol fillsymbol = new SimpleFillSymbolClass();
+                    fillsymbol.Color = rgbcolor;
+                    fillsymbol.Style = esriSimpleFillStyle.esriSFSForwardDiagonal;
+                    IElement pelement = new PolygonElementClass();
+                    pelement.Geometry = pGeoOut;
+                    IFillShapeElement pfillelement = pelement as IFillShapeElement;
+                    pfillelement.Symbol = fillsymbol as IFillSymbol;
+                    (axMapControl1.Map as IGraphicsContainer).AddElement(pelement, 0);
+                    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                }
+            }
+
+        }
+
+        private void 缓冲ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show
+                           ("需要两个元素，准备好了吗?", "提示",
+                           MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return;
+            IGraphicsContainerSelect pGCS = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect接口由MAP接口转换而来，用于管理所选元素
+            if (pGCS.ElementSelectionCount == 2)
+            {
+                IEnumElement pEnumE = pGCS.SelectedElements;
+                pEnumE.Reset();
+
+                IElement pE1 = pEnumE.Next();
+                IGeometry pG1 = pE1.Geometry;
+
+                ITopologicalOperator2 pTopo = pG1 as ITopologicalOperator2;
+                //ITopologicalOperator拓扑接口，交并补差，通常下一次操作两个元素
+                //注：一般不用ITopologicalOperator接口，改用2甚至更高，因为1容易报错
+                if (!pTopo.IsKnownSimple)
+                    pTopo.Simplify();
+
+                IElement pE2 = pEnumE.Next();
+                IGeometry pG2 = pE2.Geometry;
+
+                IGeometry pGeoOut = null;
+
+                if (pE2 != null)
+                {
+                    (pG2 as ITopologicalOperator2).Simplify();
+                    //5.求缓冲
+                    pGeoOut = pTopo.Buffer(20);
+                }
+                if (pGeoOut != null)
+                {
+                    IRgbColor rgbcolor = new RgbColorClass();
+                    rgbcolor.Blue = 255;
+                    ISimpleFillSymbol fillsymbol = new SimpleFillSymbolClass();
+                    fillsymbol.Color = rgbcolor;
+                    fillsymbol.Style = esriSimpleFillStyle.esriSFSForwardDiagonal;
+                    IElement pelement = new PolygonElementClass();
+                    pelement.Geometry = pGeoOut;
+                    IFillShapeElement pfillelement = pelement as IFillShapeElement;
+                    pfillelement.Symbol = fillsymbol as IFillSymbol;
+                    (axMapControl1.Map as IGraphicsContainer).AddElement(pelement, 0);
+                    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                }
+            }
+        }
+
+        private void 凸包ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show
+               ("需要两个元素，准备好了吗?", "提示",
+               MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                return;
+            IGraphicsContainerSelect pGCS = axMapControl1.Map as IGraphicsContainerSelect;
+            //IGraphicsContainerSelect接口由MAP接口转换而来，用于管理所选元素
+            if (pGCS.ElementSelectionCount == 2)
+            {
+                IEnumElement pEnumE = pGCS.SelectedElements;
+                pEnumE.Reset();
+
+                IElement pE1 = pEnumE.Next();
+                IGeometry pG1 = pE1.Geometry;
+
+                ITopologicalOperator2 pTopo = pG1 as ITopologicalOperator2;
+                //ITopologicalOperator拓扑接口，交并补差，通常下一次操作两个元素
+                //注：一般不用ITopologicalOperator接口，改用2甚至更高，因为1容易报错
+                if (!pTopo.IsKnownSimple)
+                    pTopo.Simplify();
+
+
+                IElement pE2 = pEnumE.Next();
+                IGeometry pG2 = pE2.Geometry;
+
+                IGeometry pGeoOut = null;
+
+                if (pE2 != null)
+                {
+                    (pG2 as ITopologicalOperator2).Simplify();
+                    //6.求凸包（最短暴露面）
+                    IGeometryCollection pGc = new PolygonClass();
+                    pGc.AddGeometry((pG1 as IGeometryCollection).get_Geometry(0));
+                    pGc.AddGeometry((pG2 as IGeometryCollection).get_Geometry(0));
+                    (pGc as ITopologicalOperator2).Simplify();
+                    pGeoOut = (pGc as ITopologicalOperator2).ConvexHull();
+                }
+                if (pGeoOut != null)
+                {
+                    IRgbColor rgbcolor = new RgbColorClass();
+                    rgbcolor.Blue = 255;
+                    ISimpleFillSymbol fillsymbol = new SimpleFillSymbolClass();
+                    fillsymbol.Color = rgbcolor;
+                    fillsymbol.Style = esriSimpleFillStyle.esriSFSForwardDiagonal;
+                    IElement pelement = new PolygonElementClass();
+                    pelement.Geometry = pGeoOut;
+                    IFillShapeElement pfillelement = pelement as IFillShapeElement;
+                    pfillelement.Symbol = fillsymbol as IFillSymbol;
+                    (axMapControl1.Map as IGraphicsContainer).AddElement(pelement, 0);
+                    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+                }
+            }
+        }
+
+        private void 图层名称ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            comboBox1.Items.Clear();
+            //清空下拉框中的元素
+            IMap pMap = axMapControl1.Map;
+            for (int i = 0; i < pMap.LayerCount; i++)
+            {
+                string name = pMap.get_Layer(i).Name;
+                //将图层名称赋值给name
+                comboBox1.Items.Add(name);
+                //将name值输入到下拉框中
+                comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+                //设置comboBox格式为DropDownList，为了防止出现可以对下拉框值进行修改的情况
+                comboBox1.SelectedIndex = 0;
+            }
+        }
+
+        private void 属性查询ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axMapControl1.CurrentTool = null;
+            currentT = "Identify";
+            axMapControl1.MousePointer = esriControlsMousePointer.esriPointerIdentify;
         }
     }
 }
