@@ -47,6 +47,12 @@ namespace WindowsFormsApplication1
 
         public Form1()
         {
+
+          
+            WelcomeFrm fw = new WelcomeFrm();
+            fw.Show();//show出欢迎窗口
+            System.Threading.Thread.Sleep(2000);//欢迎窗口停留时间2s
+            fw.Close();
             InitializeComponent();
         }
 
@@ -54,7 +60,8 @@ namespace WindowsFormsApplication1
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            
+            
             //new System.Threading.Thread(new System.Threading.ThreadStart(delegate
             //{
             //    WelcomeFrm welcomefrm = new WelcomeFrm();
@@ -309,9 +316,52 @@ namespace WindowsFormsApplication1
                     MessageBox.Show(prow.get_Value(prow.Fields.FindField("code_1")).ToString());
 
                 }
+               
+                //IMap pmap = axMapControl1.Map;
+                //for (int i = 0; i < pmap.LayerCount; i++)
+                //{
+                //    IIdentify pIdentify = pmap.get_Layer(i) as IIdentify;
+
+                //    IPoint pPoint = new PointClass();
+                //    pPoint.PutCoords(e.x, e.y);
+                //    pPoint.SpatialReference = pmap.SpatialReference;
+
+                //    IArray pArray = pIdentify.Identify(pPoint);                 //返回一个几何体集合，试一下用面呢？ trackline,trackpolygon
+                //    if (pArray != null)
+                //    {
+                //        for (int j = 0; j < pArray.Count; j++)
+                //        {
+                //            IFeatureIdentifyObj pFIO = pArray.get_Element(j) as IFeatureIdentifyObj;        //扩充为遍历每一个几何体
+                //            IRowIdentifyObject pRIO = pFIO as IRowIdentifyObject;
+                //            IRow prow = pRIO.Row;
+
+                //            axMapControl1.FlashShape((prow as IFeature).Shape, 3, 300, Type.Missing);
+                //            MessageBox.Show(prow.get_Value(prow.Fields.FindField("OBJECTID")).ToString());
+                //        }
+                //    }
+                //}
+
 
             }
+            else if (currentT == "Draw_point_project")
+            {
+                IPoint point = PRJtoGCS(e.mapX, e.mapY);
+                double x, y;
+                point.QueryCoords(out x, out y);
+                MessageBox.Show("平面坐标是：" + e.mapX.ToString() + ";  " + e.mapY.ToString() + "\n\n" + "地理坐标是：" + x.ToString() + ";  " + y.ToString(), "提示");
+            }
         }//鼠标在地图上发生事件
+
+        private IPoint PRJtoGCS(double x, double y)
+        {
+            IPoint point = new PointClass();
+            point.PutCoords(x, y);
+            ISpatialReferenceFactory pSRF = new SpatialReferenceEnvironmentClass();
+            point.SpatialReference = pmapC.SpatialReference;
+
+            point.Project(pSRF.CreateGeographicCoordinateSystem((int)esriSRGeoCSType.esriSRGeoCS_Beijing1954));
+            return point;
+        }
         private void DrawMapShape(IGeometry pGeom)
         {
             IRgbColor pColor = new RgbColorClass();
@@ -917,7 +967,7 @@ namespace WindowsFormsApplication1
         private void 指北针ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string str_tab = tabControl1.SelectedTab.Text;
-            if (tabControl1.TabIndex != 7)
+            if (tabControl1.TabIndex != 1)
             {
                 MessageBox.Show("该功能仅能在出图视图中可用！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
@@ -926,16 +976,18 @@ namespace WindowsFormsApplication1
             page_currenttool = "NorthArrow";
             axPageLayoutControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
         }
-
+     
         private void 切换到布局视图ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (tabControl1.TabIndex == 6)
+          //  this.DialogResult = DialogResult.OK;
+           // this.Close();
+            if (tabControl1.TabIndex == 0)
             {
-                tabControl1.TabIndex = 7;
+                tabControl1.TabIndex = 1;
             }
             else
             {
-                tabControl1.TabIndex = 7;
+                tabControl1.TabIndex = 1;
             }
         }
 
@@ -980,13 +1032,13 @@ namespace WindowsFormsApplication1
 
                 return;
             }
-            //Frm_label frm = new Frm_label(TocRightLayer as IGeoFeatureLayer);
+            LabelFrm frm = new LabelFrm(layer as IGeoFeatureLayer);
             //添加一个frm label 用来控制标注
 
-            //if (frm.ShowDialog() == DialogResult.OK)
-            //{
-            //    axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
-            //}
+            if (frm.ShowDialog() == DialogResult.OK)
+            {
+                axMapControl1.ActiveView.PartialRefresh(esriViewDrawPhase.esriViewGraphics, null, null);
+            }
         }
 
 
@@ -1589,6 +1641,31 @@ namespace WindowsFormsApplication1
             axMapControl1.CurrentTool = null;
             currentT = "Identify";
             axMapControl1.MousePointer = esriControlsMousePointer.esriPointerIdentify;
+        }
+
+        private void 退出ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void 编辑ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void 投影信息ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            axMapControl1.CurrentTool = null;
+            currentT = "Draw_point_project";
+            axMapControl1.MousePointer = esriControlsMousePointer.esriPointerCrosshair;
+        }
+
+        private void 唯一值符号化ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ////UniqueValueSymbolFrm frm = new UniqueValueSymbolFrm(axMapControl1);
+            //frm.ShowDialog();
+            //axMapControl1.Refresh(esriViewDrawPhase.esriViewGeography, null, axMapControl1.Extent);
+            //axTOCControl1.Update();
         }
     }
 }
